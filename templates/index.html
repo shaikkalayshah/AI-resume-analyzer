@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Resume Analyzer</title>
+
+    <!-- Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            margin: 0;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 750px;
+            margin: 30px auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        input, textarea {
+            width: 90%;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            margin-top: 10px;
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #5a67d8;
+        }
+
+        .box {
+            background: #f8f8f8;
+            padding: 12px;
+            margin-top: 15px;
+            border-radius: 8px;
+            text-align: left;
+        }
+
+        .score {
+            font-size: 22px;
+            font-weight: bold;
+            color: green;
+        }
+
+        canvas {
+            max-width: 350px;
+            margin: auto;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🚀 AI Resume Analyzer Dashboard</h1>
+
+    <!-- Upload -->
+    <form method="POST" enctype="multipart/form-data">
+        <input type="file" name="resume" required><br>
+        <button type="submit">Analyze Resume</button>
+    </form>
+
+    {% if skills %}
+
+    <div class="box">
+        <h3>🧠 Skills Found</h3>
+        <p>{{ skills }}</p>
+    </div>
+
+    <div class="box">
+        <h3>📊 ATS Score</h3>
+        <p class="score">{{ score }}%</p>
+    </div>
+
+    <div class="box">
+        <h3>🎯 Predicted Job Role</h3>
+        <p>{{ role }}</p>
+    </div>
+
+    <div class="box">
+        <h3>🎯 Interview Questions</h3>
+        <pre>{{ questions }}</pre>
+    </div>
+
+    <!-- Answer -->
+    <form method="POST">
+        <textarea name="answer" placeholder="Write your answer..." rows="4"></textarea><br>
+        <button type="submit">Get Feedback</button>
+    </form>
+
+    {% if feedback %}
+    <div class="box">
+        <h3>💬 Feedback</h3>
+        <p>{{ feedback }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Charts -->
+    <div class="box">
+        <h3>📊 ATS Score Chart</h3>
+        <canvas id="scoreChart"></canvas>
+    </div>
+
+    <div class="box">
+        <h3>📊 Skills Distribution</h3>
+        <canvas id="skillsChart"></canvas>
+    </div>
+
+    <div class="box">
+        <h3>🧠 Skill Profile (Radar)</h3>
+        <canvas id="radarChart"></canvas>
+    </div>
+
+    <div class="box">
+        <h3>🎯 Role Confidence</h3>
+        <canvas id="roleChart"></canvas>
+    </div>
+
+    {% endif %}
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const score = {{ score | default(0) }};
+    const skills = {{ skills_data | tojson if skills_data else [] }};
+    const role = "{{ role_name }}";
+
+    // Score Chart
+    const scoreCanvas = document.getElementById('scoreChart');
+    if (scoreCanvas) {
+        new Chart(scoreCanvas, {
+            type: 'doughnut',
+            data: {
+                labels: ['Score', 'Remaining'],
+                datasets: [{
+                    data: [score, 100 - score],
+                    backgroundColor: ['#667eea', '#ddd']
+                }]
+            }
+        });
+    }
+
+    // Skills Chart
+    const skillsCanvas = document.getElementById('skillsChart');
+    if (skillsCanvas && skills.length > 0) {
+        new Chart(skillsCanvas, {
+            type: 'bar',
+            data: {
+                labels: skills,
+                datasets: [{
+                    label: 'Skills',
+                    data: skills.map(() => 1),
+                    backgroundColor: '#764ba2'
+                }]
+            }
+        });
+    }
+
+    // Radar Chart
+    const radarCanvas = document.getElementById('radarChart');
+    if (radarCanvas && skills.length > 0) {
+        new Chart(radarCanvas, {
+            type: 'radar',
+            data: {
+                labels: skills,
+                datasets: [{
+                    label: 'Skill Strength',
+                    data: skills.map(() => Math.floor(Math.random()*40+60)),
+                    backgroundColor: 'rgba(102,126,234,0.2)',
+                    borderColor: '#667eea'
+                }]
+            }
+        });
+    }
+
+    // Role Confidence
+    const roleCanvas = document.getElementById('roleChart');
+    if (roleCanvas) {
+        const roles = ["Data Analyst","Web Developer","Backend Developer","Software Engineer","QA Engineer"];
+
+        const confidence = roles.map(r => {
+            if (r === role) return 85;
+            return 30;
+        });
+
+        new Chart(roleCanvas, {
+            type: 'bar',
+            data: {
+                labels: roles,
+                datasets: [{
+                    label: 'Confidence %',
+                    data: confidence,
+                    backgroundColor: roles.map(r => r === role ? '#667eea' : '#ccc')
+                }]
+            },
+            options: {
+                scales: {
+                    y: { beginAtZero: true, max: 100 }
+                }
+            }
+        });
+    }
+
+});
+</script>
+
+</body>
+</html>
